@@ -8,6 +8,14 @@ function App() {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // Add these with your other state declarations
+  const [text, setText] = useState("");
+  const [results, setResults] = useState({
+    readability: 0,
+    ai_generated_score: 0,
+    sources_attribution: 0,
+    citations: 0,
+  });
 
   // Light/Dark theme toggle
   useEffect(() => {
@@ -39,6 +47,36 @@ function App() {
 
     return () => window.removeEventListener("click", closeDropdown);
   }, [isNotificationOpen]);
+
+  // Fetching the API
+  const handleScan = async () => {
+    if (!text.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        "https://web-production-d4f59.up.railway.app/detect",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text }),
+        }
+      );
+
+      const data = await response.json();
+      setResults({
+        readability: parseInt(data.plagiarism_percentage) || 0,
+        ai_generated_score: data.ai_generated ? 100 : 0,
+        sources_attribution: data.sources_attribution || 0,
+        citations: data.citations || 0,
+      });
+    } catch (error) {
+      console.error("Error:", error);
+    }
+    setIsLoading(false);
+  };
 
   return (
     <>
@@ -145,7 +183,11 @@ function App() {
           {/* Main Section */}
           <div className="bg-white dark:bg-slate-700 rounded-2xl flex flex-col flex-auto h-full min-h-96 w-full lg:w-2/3 p-4 sm:p-5 shadow-md">
             {/* Text Section */}
-            <textarea className="h-full resize-none mb-3 p-2 outline-none dark:bg-slate-700 dark:text-white"></textarea>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="h-full resize-none mb-3 p-2 outline-none dark:bg-slate-700 dark:text-white"
+            ></textarea>
 
             {/* Rotating Buttons */}
             <div className="flex gap-2 sm:gap-4 justify-end items-center">
@@ -159,13 +201,7 @@ function App() {
               {/* Scan Button */}
               <button
                 className="bg-blue-800 dark:bg-blue-600 text-white rounded-full w-20 h-8 flex justify-center items-center transition-all duration-300 hover:bg-blue-600 hover:scale-105 shadow-xl z-100"
-                onClick={() => {
-                  setIsLoading(true);
-                  // Simulate scanning process
-                  setTimeout(() => {
-                    setIsLoading(false);
-                  }, 5000); // 5 seconds delay
-                }}
+                onClick={handleScan}
               >
                 Scan
               </button>
@@ -177,7 +213,7 @@ function App() {
             <div className="bg-white dark:bg-slate-700 dark:text-white rounded-2xl shadow-md flex flex-row items-center py-3 sm:py-5 gap-4 w-full min-h-[5rem] sm:min-h-[8rem] px-4 sm:px-6">
               <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-600"></div>
               <div className="flex flex-col items-start">
-                <h2 className="text-xl sm:text-2xl font-bold">0/100</h2>
+                <h2 className="text-xl sm:text-2xl font-bold">{results.readability}/100</h2>
                 <p className="text-sm sm:text-base">Readability</p>
               </div>
             </div>
@@ -186,7 +222,7 @@ function App() {
             <div className="bg-white dark:bg-slate-700 dark:text-white rounded-2xl shadow-md flex flex-row items-center py-3 sm:py-5 gap-4 w-full min-h-[5rem] sm:min-h-[8rem] px-4 sm:px-6">
               <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-600"></div>
               <div className="flex flex-col items-start">
-                <h2 className="text-2xl font-bold">0/100</h2>
+                <h2 className="text-2xl font-bold">{results.ai_generated_score}/100</h2>
                 <p>AI Generated</p>
               </div>
             </div>
@@ -195,7 +231,7 @@ function App() {
             <div className="bg-white dark:bg-slate-700 dark:text-white rounded-2xl shadow-md flex flex-row items-center py-3 sm:py-5 gap-4 w-full min-h-[5rem] sm:min-h-[8rem] px-4 sm:px-6">
               <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-600"></div>
               <div className="flex flex-col items-start">
-                <h2 className="text-2xl font-bold">0/100</h2>
+                <h2 className="text-2xl font-bold">{results.sources_attribution}/100</h2>
                 <p>Sources Attribution</p>
               </div>
             </div>
@@ -204,7 +240,7 @@ function App() {
             <div className="bg-white dark:bg-slate-700 dark:text-white rounded-2xl shadow-md flex flex-row items-center py-3 sm:py-5 gap-4 w-full min-h-[5rem] sm:min-h-[8rem] px-4 sm:px-6">
               <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-purple-600"></div>
               <div className="flex flex-col items-start">
-                <h2 className="text-2xl font-bold">0/100</h2>
+                <h2 className="text-2xl font-bold">{results.citations}/100</h2>
                 <p>Citations</p>
               </div>
             </div>
