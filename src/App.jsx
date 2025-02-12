@@ -8,7 +8,6 @@ function App() {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  // Add these with your other state declarations
   const [text, setText] = useState("");
   const [results, setResults] = useState({
     readability: 0,
@@ -48,34 +47,23 @@ function App() {
     return () => window.removeEventListener("click", closeDropdown);
   }, [isNotificationOpen]);
 
-  // Fetching the API
-  const handleScan = async () => {
-    if (!text.trim()) return;
-
+  // Mimics API Fetch Waiting for response
+  const handleScan = () => {
+    console.log("Scan button clicked");
     setIsLoading(true);
-    try {
-      const response = await fetch(
-        "https://web-production-d4f59.up.railway.app/detect",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ text }),
-        }
-      );
-
-      const data = await response.json();
-      setResults({
-        readability: parseInt(data.plagiarism_percentage) || 0,
-        ai_generated_score: data.ai_generated ? 100 : 0,
-        sources_attribution: data.sources_attribution || 0,
-        citations: data.citations || 0,
-      });
-    } catch (error) {
-      console.error("Error:", error);
-    }
-    setIsLoading(false);
+  
+    setTimeout(() => {
+      console.log("Setting new results");
+      const mockResults = {
+        readability: Math.floor(Math.random() * 101),
+        ai_generated_score: Math.floor(Math.random() * 101),
+        sources_attribution: Math.floor(Math.random() * 101),
+        citations: Math.floor(Math.random() * 101),
+      };
+  
+      setResults(mockResults);
+      setIsLoading(false);
+    }, 5000);
   };
 
   return (
@@ -191,10 +179,10 @@ function App() {
 
             {/* Rotating Buttons */}
             <div className="flex gap-2 sm:gap-4 justify-end items-center">
-              <button className="bg-slate-50 rounded-full hover:bg-slate-200 w-10 h-10 text-2xl dark:bg-slate-600 flex justify-center items-center transition-transform duration-300 hover:rotate-[360deg] shadow-md">
+              <button className="bg-slate-50 rounded-full hover:bg-slate-200 w-10 h-10 text-2xl dark:bg-slate-600 flex justify-center items-center transition-transform duration-1000 hover:rotate-[360deg] shadow-md">
                 <FiPaperclip />
               </button>
-              <button className="bg-slate-50 rounded-full hover:bg-slate-200 w-10 h-10 text-xl dark:bg-slate-600 flex justify-center items-center transition-transform duration-300 hover:rotate-[360deg] shadow-md">
+              <button className="bg-slate-50 rounded-full hover:bg-slate-200 w-10 h-10 text-xl dark:bg-slate-600 flex justify-center items-center transition-transform duration-1000 hover:rotate-[360deg] shadow-md">
                 <FaArrowsRotate />
               </button>
 
