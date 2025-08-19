@@ -51,7 +51,7 @@ function App() {
   const handleScan = () => {
     console.log("Scan button clicked");
     setIsLoading(true);
-  
+
     setTimeout(() => {
       console.log("Setting new results");
       const mockResults = {
@@ -60,7 +60,7 @@ function App() {
         sources_attribution: Math.floor(Math.random() * 101),
         citations: Math.floor(Math.random() * 101),
       };
-  
+
       setResults(mockResults);
       setIsLoading(false);
     }, 5000);
@@ -174,14 +174,54 @@ function App() {
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
+              placeholder="Paste the essay here to check plagiarism."
               className="h-full resize-none mb-3 p-2 outline-none dark:bg-slate-700 dark:text-white"
             ></textarea>
 
             {/* Rotating Buttons */}
             <div className="flex gap-2 sm:gap-4 justify-end items-center">
-              <button className="bg-slate-50 rounded-full hover:bg-slate-200 w-10 h-10 text-2xl dark:bg-slate-600 flex justify-center items-center transition-transform duration-1000 hover:rotate-[360deg] shadow-md">
+              <label className="bg-slate-50 rounded-full hover:bg-slate-200 w-10 h-10 text-2xl dark:bg-slate-600 flex justify-center items-center transition-transform duration-1000 hover:rotate-[360deg] shadow-md cursor-pointer">
                 <FiPaperclip />
-              </button>
+                <input
+                  type="file"
+                  accept=".txt,.docx"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    if (file.name.endsWith(".txt")) {
+                      const textContent = await file.text();
+                      setText(textContent);
+                    } else if (file.name.endsWith(".docx")) {
+                      // Dynamically import mammoth for docx parsing
+                      import("mammoth")
+                        .then((mammoth) => {
+                          const reader = new FileReader();
+                          reader.onload = async (ev) => {
+                            const arrayBuffer = ev.target.result;
+                            mammoth
+                              .convertToHtml({ arrayBuffer })
+                              .then((result) => {
+                                // Strip HTML tags for plain text
+                                const plainText = result.value.replace(
+                                  /<[^>]+>/g,
+                                  " "
+                                );
+                                setText(plainText);
+                              })
+                              .catch(() => alert("Failed to read .docx file."));
+                          };
+                          reader.readAsArrayBuffer(file);
+                        })
+                        .catch(() => alert("Failed to load docx parser."));
+                    } else {
+                      alert("Unsupported file type.");
+                    }
+                    // Reset input so same file can be uploaded again
+                    e.target.value = "";
+                  }}
+                />
+              </label>
               <button className="bg-slate-50 rounded-full hover:bg-slate-200 w-10 h-10 text-xl dark:bg-slate-600 flex justify-center items-center transition-transform duration-1000 hover:rotate-[360deg] shadow-md">
                 <FaArrowsRotate />
               </button>
@@ -201,7 +241,9 @@ function App() {
             <div className="bg-white dark:bg-slate-700 dark:text-white rounded-2xl shadow-md flex flex-row items-center py-3 sm:py-5 gap-4 w-full min-h-[5rem] sm:min-h-[8rem] px-4 sm:px-6">
               <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-600"></div>
               <div className="flex flex-col items-start">
-                <h2 className="text-xl sm:text-2xl font-bold">{results.readability}/100</h2>
+                <h2 className="text-xl sm:text-2xl font-bold">
+                  {results.readability}/100
+                </h2>
                 <p className="text-sm sm:text-base">Readability</p>
               </div>
             </div>
@@ -210,7 +252,9 @@ function App() {
             <div className="bg-white dark:bg-slate-700 dark:text-white rounded-2xl shadow-md flex flex-row items-center py-3 sm:py-5 gap-4 w-full min-h-[5rem] sm:min-h-[8rem] px-4 sm:px-6">
               <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-600"></div>
               <div className="flex flex-col items-start">
-                <h2 className="text-2xl font-bold">{results.ai_generated_score}/100</h2>
+                <h2 className="text-2xl font-bold">
+                  {results.ai_generated_score}/100
+                </h2>
                 <p>AI Generated</p>
               </div>
             </div>
@@ -219,7 +263,9 @@ function App() {
             <div className="bg-white dark:bg-slate-700 dark:text-white rounded-2xl shadow-md flex flex-row items-center py-3 sm:py-5 gap-4 w-full min-h-[5rem] sm:min-h-[8rem] px-4 sm:px-6">
               <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-600"></div>
               <div className="flex flex-col items-start">
-                <h2 className="text-2xl font-bold">{results.sources_attribution}/100</h2>
+                <h2 className="text-2xl font-bold">
+                  {results.sources_attribution}/100
+                </h2>
                 <p>Sources Attribution</p>
               </div>
             </div>
